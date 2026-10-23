@@ -73,7 +73,8 @@ if (process.platform !== "win32") {
       for (let i = 0; i < 50 && !existsSync(out); i++) await Bun.sleep(20)
       expect(await Bun.file(out).text()).toBe("https://example.com/path")
     } finally {
-      process.env.BROWSER = previous
+      if (previous === undefined) delete process.env.BROWSER
+      else process.env.BROWSER = previous
     }
   })
 
@@ -90,7 +91,8 @@ if (process.platform !== "win32") {
       for (let i = 0; i < 50 && !existsSync(out); i++) await Bun.sleep(20)
       expect(await Bun.file(out).text()).toBe("https://example.com/later")
     } finally {
-      process.env.BROWSER = previous
+      if (previous === undefined) delete process.env.BROWSER
+      else process.env.BROWSER = previous
     }
   })
 }
