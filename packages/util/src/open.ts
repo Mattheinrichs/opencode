@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process"
+import type { ChildProcess } from "node:child_process"
 import open from "open"
 
 interface BrowserCommand {
@@ -67,30 +68,29 @@ function expandFieldCodes(part: string, url: string): { value: string; placed: b
 
 /** Resolve once the process actually started; reject if it could not (ENOENT). */
 function spawnDetached(command: string, args: string[]) {
-  return new Promise<void>((resolve, reject) => {
+  return new Promise<ChildProcess>((resolve, reject) => {
     const child = spawn(command, args, { stdio: "ignore", detached: true })
     child.once("spawn", () => {
       child.unref()
-      resolve()
+      resolve(child)
     })
     child.once("error", reject)
   })
 }
 
-export async function openUrl(input: string) {
+export async function openUrl(input: string): Promise<ChildProcess> {
   const url = URL.canParse(input) ? new URL(input) : undefined
   if (!url || (url.protocol !== "http:" && url.protocol !== "https:"))
     throw new Error(`Only http and https links can be opened in the browser: ${input}`)
 
   for (const candidate of browserCommands(url.href)) {
     try {
-      await spawnDetached(candidate.command, candidate.args)
-      return
+      return await spawnDetached(candidate.command, candidate.args)
     } catch {
       // Try the next BROWSER candidate; a missing first choice must not win.
     }
   }
-  await open(url.href)
+  return open(url.href)
 }
 
 export function openPath(path: string) {
